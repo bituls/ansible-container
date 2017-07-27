@@ -24,11 +24,14 @@ class Deploy(K8sBaseDeploy):
         task['k8s_v1_namespace'] = CommentedMap()
         task['k8s_v1_namespace']['name'] = self.namespace_name
         task['k8s_v1_namespace']['state'] = state
+        if state == 'absent' and self.namespace_name == 'default':
+            task['k8s_v1_namespace']['state'] = 'present'
         if tags:
             task['tags'] = copy.copy(tags)
         return task
 
-    def get_deployment_templates(self, default_api=None, defualt_kind=None, default_strategy=None, engine_state=None):
+    def get_deployment_templates(self, default_api=None, defualt_kind=None, default_strategy=None, engine_state=None,
+                                 state='present'):
         strategy = {
             'type': 'RollingUpdate',
             'rolling_update': {
@@ -39,10 +42,11 @@ class Deploy(K8sBaseDeploy):
         return super(Deploy, self).get_deployment_templates(default_api='apps/v1beta1',
                                                             default_kind='deployment',
                                                             default_strategy=strategy,
-                                                            engine_state=engine_state)
+                                                            engine_state=engine_state,
+                                                            state=state)
 
-    def get_deployment_tasks(self, module_name=None, engine_state=None, tags=[]):
+    def get_deployment_tasks(self, module_name=None, engine_state=None, state='present', tags=[]):
         return super(Deploy, self).get_deployment_tasks(module_name='k8s_apps_v1beta1_deployment',
-                                                        engine_state=engine_state,
+                                                        engine_state=engine_state, state=state,
                                                         tags=tags)
 

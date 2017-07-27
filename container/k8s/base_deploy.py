@@ -86,7 +86,7 @@ class K8sBaseDeploy(object):
                     template['kind'] = 'Service'
                     template['force'] = service.get(self.CONFIG_KEY, {}).get('service', {}).get('force', False)
                     labels = CommentedMap([
-                        ('app', self._namespace_name),
+                        ('app', self._project_name),
                         ('service', name)
                     ])
                     template['metadata'] = CommentedMap([
@@ -149,14 +149,14 @@ class K8sBaseDeploy(object):
                                     templates.append(new_service)
         return templates
 
-    def get_service_tasks(self, tags=[]):
+    def get_service_tasks(self, state='present', tags=[]):
         module_name='k8s_v1_service'
         tasks = CommentedSeq()
         for template in self.get_services_templates():
             task = CommentedMap()
-            task['name'] = 'Create service'
+            task['name'] = 'Create service' if state == 'present' else 'Remove service'
             task[module_name] = CommentedMap()
-            task[module_name]['state'] = 'present'
+            task[module_name]['state'] = state
             if self._auth:
                 for key in self._auth:
                     task[module_name][key] = self._auth[key]
@@ -276,7 +276,8 @@ class K8sBaseDeploy(object):
     )
 
     @abstractmethod
-    def get_deployment_templates(self, default_api=None, default_kind=None, default_strategy=None, engine_state=None):
+    def get_deployment_templates(self, default_api=None, default_kind=None, default_strategy=None, engine_state=None,
+                                 state='present'):
 
         def _service_to_k8s_container(name, config, container_name=None):
             container = CommentedMap()
@@ -287,7 +288,7 @@ class K8sBaseDeploy(object):
                 container['name'] = container['name'] if config.get('container_name') else name
 
             container['securityContext'] = CommentedMap()
-            container['state'] = 'present'
+            container['state'] = state
             volumes = []
 
             for key, value in iteritems(config):
@@ -402,12 +403,12 @@ class K8sBaseDeploy(object):
                                 self.copy_attribute(pod, deployment_key, deployment_value)
 
             labels = CommentedMap([
-                ('app', self._namespace_name),
+                ('app', self._project_name),
                 ('service', name)
             ])
 
-            state = service_config.get(self.CONFIG_KEY, {}).get('state', 'present')
-            if state == 'present':
+            service_state = service_config.get(self.CONFIG_KEY, {}).get('state', 'present')
+            if service_state == 'present':
                 template = CommentedMap()
                 template['apiVersion'] = default_api
                 template['kind'] = default_kind
@@ -444,17 +445,17 @@ class K8sBaseDeploy(object):
         return templates
 
     @abstractmethod
-    def get_deployment_tasks(self, module_name=None, engine_state=None, tags=[]):
+    def get_deployment_tasks(self, module_name=None, engine_state=None, state='present', tags=[]):
         tasks = CommentedSeq()
-        for template in self.get_deployment_templates(engine_state=engine_state):
+        for template in self.get_deployment_templates(engine_state=engine_state, state=state):
             task = CommentedMap()
             if engine_state is None:
                 task_name = 'Create deployment, and scale replicas up'
             else:
                 task_name = 'Stop running containers by scaling replicas down to 0'
-            task['name'] = task_name
+            task['name'] = task_name  if state == 'present' else 'Remove deployment and pods'
             task[module_name] = CommentedMap()
-            task[module_name]['state'] = 'present'
+            task[module_name]['state'] = state
             if self._auth:
                 for key in self._auth:
                     task[module_name][key] = self._auth[key]
@@ -525,14 +526,14 @@ class K8sBaseDeploy(object):
                         templates.append(volume)
         return templates
 
-    def get_pvc_tasks(self, tags=[]):
+    def get_pvc_tasks(self, state='present', tags=[]):
         module_name='k8s_v1_persistent_volume_claim'
         tasks = CommentedSeq()
         for template in self.get_pvc_templates():
             task = CommentedMap()
-            task['name'] = 'Create PVC'
+            task['name'] = 'Create PVC' if state == 'present' else 'Remove PVC'
             task[module_name] = CommentedMap()
-            task[module_name]['state'] = 'present'
+            task[module_name]['state'] = state
             if self._auth:
                 for key in self._auth:
                     task[module_name][key] = self._auth[key]

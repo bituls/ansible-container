@@ -207,12 +207,16 @@ class K8sBaseEngine(DockerEngine):
         play.yaml_set_comment_before_after_key('tasks', before='Tasks for setting the application state. '
                                                'Valid tags include: start, stop, restart, destroy', indent=4)
         play['tasks'].append(self.deploy.get_namespace_task(state='present', tags=['start']))
-        play['tasks'].append(self.deploy.get_namespace_task(state='absent', tags=['destroy']))
         play['tasks'].extend(self.deploy.get_secret_tasks(tags=['start']))
         play['tasks'].extend(self.deploy.get_service_tasks(tags=['start']))
+        play['tasks'].append(self.deploy.get_service_tasks(state='absent', tags=['destroy']))
         play['tasks'].extend(self.deploy.get_deployment_tasks(engine_state='stop', tags=['stop', 'restart']))
         play['tasks'].extend(self.deploy.get_deployment_tasks(tags=['start', 'restart']))
+        play['tasks'].append(self.deploy.get_deployment_tasks(engine_state='stop', state='absent', tags=['destroy']))
         play['tasks'].extend(self.deploy.get_pvc_tasks(tags=['start']))
+        play['tasks'].append(self.deploy.get_pvc_tasks(state='absent', tags=['destroy']))
+        play['tasks'].append(self.deploy.get_namespace_task(state='absent', tags=['destroy']))
+
 
         playbook = CommentedSeq()
         playbook.append(play)
