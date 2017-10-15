@@ -25,6 +25,7 @@ class Deploy(K8sBaseDeploy):
         task['k8s_v1_namespace']['name'] = self.namespace_name
         task['k8s_v1_namespace']['state'] = state
         if state == 'absent' and self.namespace_name == 'default':
+            task['name'] = '{} {}'.format('Not destroying default namespace', self.namespace_name)
             task['k8s_v1_namespace']['state'] = 'present'
         if tags:
             task['tags'] = copy.copy(tags)

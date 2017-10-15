@@ -87,10 +87,10 @@ class K8sBaseDeploy(object):
                     template['force'] = service.get(self.CONFIG_KEY, {}).get('service', {}).get('force', False)
                     labels = CommentedMap([
                         ('app', self._project_name),
-                        ('service', name)
+                        ('service', '{0}-{1}'.format(self._project_name, name))
                     ])
                     template['metadata'] = CommentedMap([
-                        ('name', name),
+                        ('name', '{0}-{1}'.format(self._project_name, name)),
                         ('namespace', self._namespace_name),
                         ('labels', copy.deepcopy(labels))
                     ])
@@ -386,12 +386,12 @@ class K8sBaseDeploy(object):
             pod = {}
             if service_config.get('containers'):
                 for c in service_config['containers']:
-                    cname = "{}-{}".format(name, c['container_name'])
-                    k8s_container, k8s_volumes, = _service_to_k8s_container(name, c, container_name=cname)
+                    cname = "{}-{}".format('{0}-{1}'.format(self._project_name, name), c['container_name'])
+                    k8s_container, k8s_volumes, = _service_to_k8s_container('{0}-{1}'.format(self._project_name, name), c, container_name=cname)
                     containers.append(k8s_container)
                     _update_volumes(volumes, k8s_volumes)
             else:
-                k8s_container, k8s_volumes = _service_to_k8s_container(name, service_config)
+                k8s_container, k8s_volumes = _service_to_k8s_container('{0}-{1}'.format(self._project_name, name), service_config)
                 containers.append(k8s_container)
                 volumes += k8s_volumes
 
@@ -404,7 +404,7 @@ class K8sBaseDeploy(object):
 
             labels = CommentedMap([
                 ('app', self._project_name),
-                ('service', name)
+                ('service', '{0}-{1}'.format(self._project_name, name))
             ])
 
             service_state = service_config.get(self.CONFIG_KEY, {}).get('state', 'present')
@@ -414,7 +414,7 @@ class K8sBaseDeploy(object):
                 template['kind'] = default_kind
                 template['force'] = service_config.get(self.CONFIG_KEY, {}).get('deployment', {}).get('force', False)
                 template['metadata'] = CommentedMap([
-                    ('name', name),
+                    ('name', '{0}-{1}'.format(self._project_name, name)),
                     ('labels', copy.deepcopy(labels)),
                     ('namespace', self._namespace_name)
                 ])
@@ -485,7 +485,7 @@ class K8sBaseDeploy(object):
                     if self._auth:
                         for key in self._auth:
                             task[module_name][key] = self._auth[key]
-                    task[module_name]['name'] = name
+                    task[module_name]['name'] = '{0}-{1}'.format(self._project_name, name)
                     task[module_name]['namespace'] = self._namespace_name
                     if tags:
                         task['tags'] = copy.copy(tags)
@@ -830,4 +830,3 @@ class K8sBaseDeploy(object):
                     target[src_key_camel].append(element)
         else:
             target[src_key_camel] = src_value
-
