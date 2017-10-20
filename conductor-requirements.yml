@@ -1,3 +1,2 @@
 - src: ansible.kubernetes-modules
   name: kubernetes-modules
-  version: v0.0.1
