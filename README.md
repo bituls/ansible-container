@@ -5,6 +5,36 @@
 
 Ansible Container is a tool for building Docker images and orchestrating containers using Ansible playbooks.
 
+This fork adds the following changes to Ansible Container.
+
+- When deploying to k8s, allow adding more options in the deployment's container spec. Eg a readinessProbe can be added as follows:
+```
+k8s:
+          service:
+            type: NodePort
+            session_affinity: ClientIP
+          deployment:
+            containers:
+              readiness_probe:
+                http_get:
+                  path: /
+                  port: 8000
+                  scheme: HTTP
+                initial_delay_seconds: 120
+                period_seconds: 60
+```
+
+- Use the default namespace in a k8s deploy if the `container.yml` specifies `default` as the name of the k8s_namespace, name attribute. Eg:
+```
+  k8s_namespace:
+    name: default
+```
+- In the above case, the k8s objects will be created in the default namespace and the project_name will be appended to all object names. This allows same service but different projects to live in the k8s default namespace. This is useful if you want to use one k8s ingress for all services and avoid using (and paying) for more loadbalancers in a cloud provider like GCE for example. The project_name can be specified in `container.yml` or passed as a flag to `ansible-container build` with `--project-name` or `-n` option. See `ansible-container --help`
+
+- In relation to the above, when destroying with `ansible-container --engine k8s destroy`, this version will not destroy by removing the namespace but will destroy each object individually
+
+**Note:** You will have to install this from source and build a conductor image based on this version. See the install instructions in this document. Otherwise, ansible-container will use the default conductor images that contain the original ansible-container project
+
 ## How it works
 
 Use Ansible Container to manage the container lifecycle from development, through testing, to production:
@@ -32,20 +62,39 @@ Use Ansible Container to manage the container lifecycle from development, throug
 
 ## Installing
 
-Install using *pip*, the Python package manager:
+~~Install using *pip*, the Python package manager:~~
 
     $ sudo pip install ansible-container[docker,openshift]
     
-Or, to install without root privileges, use [virtualenv](https://virtualenv.pypa.io/en/stable/) to first create a 
-Python sandbox:
+~~Or, to install without root privileges, use [virtualenv](https://virtualenv.pypa.io/en/stable/) to first create a 
+Python sandbox:~~
     
     $ virtualenv ansible-container
     $ source ansible-container/bin/activate
     $ pip install ansible-container[docker,openshift]
 
-For more details, prerequisite, and instructions on installing the latest development release, please view our 
-[Installation Guide](https://docs.ansible.com/ansible-container/installation.html).
+~~For more details, prerequisite, and instructions on installing the latest development release, please view our 
+[Installation Guide](https://docs.ansible.com/ansible-container/installation.html).~~
 
+Installing from Source:
+
+    $ git clone https://github.com/bituls/ansible-container.git
+    $ cd ansible-container
+    $ sudo pip install -e .[docker,openshift]
+    
+Build the conductor container
+
+    $ python ./bakery.py
+    
+Or, to build a conductor image based on a specific base image eg. debian-jessie
+
+    $ BASE_DISTRO='debian:jessie' python ./bakery.py
+    
+Do not worry if the conductor image fails to push to docker. You already have the conductor images locally.
+
+Alternatively, instead of building your own base image, just tell ansible-container to run the installed version inside the default conductor image by adding `--dev` option when running ansible-container. Eg. to build use:
+
+    $ ansible-container --dev build
 
 ## Getting started
 
