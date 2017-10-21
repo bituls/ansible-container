@@ -75,7 +75,7 @@ class K8sBaseEngine(DockerEngine):
         role_path = os.path.join(deployment_output_path, 'roles', 'ansible.kubernetes-modules')
         if deployment_output_path and not os.path.exists(role_path):
             # Install the role, if not already installed
-            ansible_cmd = "ansible-galaxy -vvv install -p ./roles ansible.kubernetes-modules"
+            ansible_cmd = "ansible-galaxy -vvv install -p ./roles ansible.kubernetes-modules,ansible-kubernetes-modules-0.3.1-6"
             logger.debug('Running ansible-galaxy', command=ansible_cmd, cwd=deployment_output_path)
             process = subprocess.Popen(ansible_cmd,
                                        shell=True,
