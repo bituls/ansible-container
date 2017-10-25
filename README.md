@@ -7,23 +7,6 @@ Ansible Container is a tool for building Docker images and orchestrating contain
 
 This fork adds the following changes to Ansible Container.
 
-- When deploying to k8s, allow adding more options in the deployment's container spec. Eg a readinessProbe can be added as follows:
-```yaml
-k8s:
-  service:
-    type: NodePort
-    session_affinity: ClientIP
-  deployment:
-    containers:
-      readiness_probe:
-        http_get:
-          path: /
-          port: 8000
-          scheme: HTTP
-        initial_delay_seconds: 120
-        period_seconds: 60
-```
-
 - Use the default namespace in a k8s deploy if the `container.yml` specifies `default` as the name of the k8s_namespace, name attribute. Eg:
 ```yaml
   k8s_namespace:

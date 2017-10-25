@@ -438,16 +438,6 @@ class K8sBaseDeploy(object):
                     for key, value in iteritems(pod):
                         if key == 'securityContext':
                             template['spec']['template']['spec'][key] = value
-                        # Additional spec can be added under k8s deployment, container spec. Like so:
-                        # k8s:
-                        #   deployment:
-                        #     containers:
-                        #       readiness_probe:
-                        #       ...etc
-                        # Here we put cater for this scenario
-                        elif key == 'containers':
-                            for c_key, c_value in value.items():
-                                template['spec']['template']['spec']['containers'][0][c_key] = c_value
                         elif key != 'replicas' or (key == 'replicas' and engine_state != 'stop'):
                             # Leave replicas at 0 when engine_state is 'stop'
                             template['spec'][key] = value
