@@ -8,30 +8,44 @@ Ansible Container is a tool for building Docker images and orchestrating contain
 This fork adds the following changes to Ansible Container.
 
 - When deploying to k8s, allow adding more options in the deployment's container spec. Eg a readinessProbe can be added as follows:
-```
+```yaml
 k8s:
-          service:
-            type: NodePort
-            session_affinity: ClientIP
-          deployment:
-            containers:
-              readiness_probe:
-                http_get:
-                  path: /
-                  port: 8000
-                  scheme: HTTP
-                initial_delay_seconds: 120
-                period_seconds: 60
+  service:
+    type: NodePort
+    session_affinity: ClientIP
+  deployment:
+    containers:
+      readiness_probe:
+        http_get:
+          path: /
+          port: 8000
+          scheme: HTTP
+        initial_delay_seconds: 120
+        period_seconds: 60
 ```
 
 - Use the default namespace in a k8s deploy if the `container.yml` specifies `default` as the name of the k8s_namespace, name attribute. Eg:
-```
+```yaml
   k8s_namespace:
     name: default
 ```
 - In the above case, the k8s objects will be created in the default namespace and the project_name will be appended to all object names. This allows same service but different projects to live in the k8s default namespace. This is useful if you want to use one k8s ingress for all services and avoid using (and paying) for more loadbalancers in a cloud provider like GCE for example. The project_name can be specified in `container.yml` or passed as a flag to `ansible-container build` with `--project-name` or `-n` option. See `ansible-container --help`
 
 - In relation to the above, when destroying with `ansible-container --engine k8s destroy`, this version will not destroy by removing the namespace but will destroy each object individually
+
+- Allow specifying a per-service or per-container use of local python during build in addition to the global `--use-local-python` flag. See that flag for details.
+  This can be specified as:
+```yaml
+  web:
+    from: "python:2.7.14-jessie"
+    local_python: True
+    ports:
+      - "80:80"
+    command: ["/usr/bin/dumb-init", "/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+    dev_overrides:
+      environment:
+        - "DEBUG=1"
+```
 
 **Note:** You will have to install this from source and build a conductor image based on this version. See the install instructions in this document. Otherwise, ansible-container will use the default conductor images that contain the original ansible-container project
 

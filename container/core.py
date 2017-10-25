@@ -725,7 +725,7 @@ def _run_intermediate_build_container(engine, container_name, cur_image_id, serv
                 mode = pieces[2]
             run_kwargs[u'volumes'][src] = {u'bind': bind, u'mode': mode}
 
-    if not kwargs['local_python']:
+    if not kwargs['local_python'] and not service.get('local_python'):
         # If we're on a debian based distro, we need the correct architecture
         # to allow python to load dynamically loaded shared libraries
         extra_library_paths = ''
@@ -881,7 +881,7 @@ def conductorcmd_build(engine_name, project_name, services, cache=True, local_py
 
                 rc = apply_role_to_container(role, container_id, service_name,
                                              engine, vars=config_vars,
-                                             local_python=local_python,
+                                             local_python=local_python or service.get('local_python'),
                                              ansible_options=ansible_options,
                                              debug=debug)
                 logger.debug('Playbook run finished.', exit_code=rc)
