@@ -702,6 +702,7 @@ class K8sBaseDeploy(object):
             if destination:
                 # slugify the destination to create a name
                 name = re.sub(r'\/', '-', destination)
+                name = re.sub(r'\.', '-', name)
                 name = re.sub(r'-', '', name, 1)
 
             if source:
